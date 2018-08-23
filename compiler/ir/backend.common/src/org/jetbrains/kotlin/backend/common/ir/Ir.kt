@@ -109,7 +109,7 @@ abstract class Symbols<out T : CommonBackendContext>(val context: T, private val
     val arrayOf = symbolTable.referenceSimpleFunction(
         builtInsPackage("kotlin").getContributedFunctions(
             Name.identifier("arrayOf"), NoLookupLocation.FROM_BACKEND
-        ).single()
+        ).first()
     )
 
     val array = symbolTable.referenceClass(builtIns.array)
@@ -142,7 +142,7 @@ abstract class Symbols<out T : CommonBackendContext>(val context: T, private val
     protected fun arrayExtensionFun(type: KotlinType, name: String): IrSimpleFunctionSymbol {
         val descriptor = builtInsPackage("kotlin")
             .getContributedFunctions(Name.identifier(name), NoLookupLocation.FROM_BACKEND)
-            .singleOrNull {
+            .firstOrNull {
                 it.valueParameters.isEmpty()
                         && (it.extensionReceiverParameter?.type?.constructor?.declarationDescriptor as? ClassDescriptor)?.defaultType == type
             }
@@ -155,13 +155,13 @@ abstract class Symbols<out T : CommonBackendContext>(val context: T, private val
     val intAnd = symbolTable.referenceSimpleFunction(
         builtIns.intType.memberScope
             .getContributedFunctions(OperatorNameConventions.AND, NoLookupLocation.FROM_BACKEND)
-            .single()
+            .first()
     )
 
     val intPlusInt = symbolTable.referenceSimpleFunction(
         builtIns.intType.memberScope
             .getContributedFunctions(OperatorNameConventions.PLUS, NoLookupLocation.FROM_BACKEND)
-            .single {
+            .first {
                 it.valueParameters.single().type == builtIns.intType
             }
     )
@@ -179,22 +179,11 @@ abstract class Symbols<out T : CommonBackendContext>(val context: T, private val
 
     abstract val coroutineSuspendedGetter: IrSimpleFunctionSymbol
 
-    val kFunctionImpl = calc { symbolTable.referenceClass(context.reflectionTypes.kFunctionImpl) }
-
     val functionReference = calc { symbolTable.referenceClass(context.getInternalClass("FunctionReference")) }
-
-    val kProperty0Impl = calc { symbolTable.referenceClass(context.reflectionTypes.kProperty0Impl) }
-    val kProperty1Impl = calc { symbolTable.referenceClass(context.reflectionTypes.kProperty1Impl) }
-    val kProperty2Impl = calc { symbolTable.referenceClass(context.reflectionTypes.kProperty2Impl) }
-    val kMutableProperty0Impl = calc { symbolTable.referenceClass(context.reflectionTypes.kMutableProperty0Impl) }
-    val kMutableProperty1Impl = calc { symbolTable.referenceClass(context.reflectionTypes.kMutableProperty1Impl) }
-    val kMutableProperty2Impl = calc { symbolTable.referenceClass(context.reflectionTypes.kMutableProperty2Impl) }
-//    val kLocalDelegatedPropertyImpl = symbolTable.referenceClass(context.reflectionTypes.kLocalDelegatedPropertyImpl)
-//    val kLocalDelegatedMutablePropertyImpl = symbolTable.referenceClass(context.reflectionTypes.kLocalDelegatedMutablePropertyImpl)
-
+    
     fun getFunction(name: Name, receiverType: KotlinType, vararg argTypes: KotlinType) =
         symbolTable.referenceFunction(receiverType.memberScope.getContributedFunctions(name, NoLookupLocation.FROM_BACKEND)
-                                          .single {
+                                          .first {
                                               var i = 0
                                               it.valueParameters.size == argTypes.size && it.valueParameters.all { type -> type == argTypes[i++] }
                                           }
@@ -206,7 +195,7 @@ abstract class Symbols<out T : CommonBackendContext>(val context: T, private val
         var result = binaryOperatorCache[key]
         if (result == null) {
             result = symbolTable.referenceFunction(lhsType.memberScope.getContributedFunctions(name, NoLookupLocation.FROM_BACKEND)
-                                                       .single { it.valueParameters.size == 1 && it.valueParameters[0].type == rhsType }
+                                                       .first { it.valueParameters.size == 1 && it.valueParameters[0].type == rhsType }
             )
             binaryOperatorCache[key] = result
         }
@@ -219,7 +208,7 @@ abstract class Symbols<out T : CommonBackendContext>(val context: T, private val
         var result = unaryOperatorCache[key]
         if (result == null) {
             result = symbolTable.referenceFunction(receiverType.memberScope.getContributedFunctions(name, NoLookupLocation.FROM_BACKEND)
-                                                       .single { it.valueParameters.isEmpty() }
+                                                       .first { it.valueParameters.isEmpty() }
             )
             unaryOperatorCache[key] = result
         }
