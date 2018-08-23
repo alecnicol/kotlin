@@ -487,6 +487,45 @@ public abstract class StackValue {
         coerce(fromType, toType, v);
     }
 
+    public static boolean requiresInlineClassBoxingOrUnboxing(
+            @NotNull Type fromType,
+            @Nullable KotlinType fromKotlinType,
+            @NotNull Type toType,
+            @Nullable KotlinType toKotlinType
+    ) {
+        if (fromKotlinType == null || toKotlinType == null) return false;
+
+        boolean isFromTypeInlineClass = InlineClassesUtilsKt.isInlineClassType(fromKotlinType);
+        boolean isToTypeInlineClass = InlineClassesUtilsKt.isInlineClassType(toKotlinType);
+
+        if (!isFromTypeInlineClass && !isToTypeInlineClass) return false;
+
+        if (fromKotlinType.equals(toKotlinType) && fromType.equals(toType)) return false;
+
+        if (isFromTypeInlineClass && isToTypeInlineClass) {
+            boolean isFromTypeUnboxed = isUnboxedInlineClass(fromKotlinType, fromType);
+            boolean isToTypeUnboxed = isUnboxedInlineClass(toKotlinType, toType);
+            if (isFromTypeUnboxed && !isToTypeUnboxed) {
+                return true;
+            }
+            else if (!isFromTypeUnboxed && isToTypeUnboxed) {
+                return true;
+            }
+        }
+        else if (isFromTypeInlineClass) {
+            if (isUnboxedInlineClass(fromKotlinType, fromType)) {
+                return true;
+            }
+        }
+        else { // isToTypeInlineClass is `true`
+            if (isUnboxedInlineClass(toKotlinType, toType)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static boolean coerceInlineClasses(
             @NotNull Type fromType,
             @Nullable KotlinType fromKotlinType,
